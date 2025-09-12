@@ -1,0 +1,140 @@
+{
+  "name": "03 expresion",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        -288
+      ],
+      "id": "646616f7-6532-4d9a-bc47-387c8b98711d",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e3352d33-13e7-4fde-8eb5-a70d1fcdc820",
+              "name": "message",
+              "value": "={{ $json.Name }} is {{ $json.Age }} years old.{{$vars.name}}\n\n{{ $today }}\n\n{{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "f8cb3e14-5a4f-48e0-8d9d-e85870ebcb57",
+              "name": "=test _struc_data",
+              "value": "={{true}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -96,
+        -288
+      ],
+      "id": "e95ed276-7740-4680-bd83-05ec2888c14e",
+      "name": "data manipulation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.user_info= $('Student_data').first().json.name;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -288
+      ],
+      "id": "990cc8ea-3ca1-4802-a20f-31008f20c4aa",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "69607e08-656b-49c4-a401-f8655bdb72d6",
+              "name": "Name",
+              "value": "Urooj ",
+              "type": "string"
+            },
+            {
+              "id": "f4467b14-478a-4c78-91f0-1228ea640a7a",
+              "name": "Last Name",
+              "value": "Fatima",
+              "type": "string"
+            },
+            {
+              "id": "a30d829a-cf97-4f2f-8738-19b48400d7e5",
+              "name": "Age",
+              "value": 19,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -288
+      ],
+      "id": "499672a8-d58c-4f46-9b10-5ff633ec427f",
+      "name": "Student_data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Student_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data manipulation": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student_data": {
+      "main": [
+        [
+          {
+            "node": "data manipulation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b5355ec6-73f4-429e-9342-1651a98ab711",
+  "meta": {
+    "instanceId": "77c124d2d91036539a30cb5fb37598dfd819687f20a98ff7e1cd19df8a70a606"
+  },
+  "id": "zCTSLreGjmsw9qYS",
+  "tags": []
+}
