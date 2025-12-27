@@ -1,0 +1,268 @@
+{
+  "name": "Assignment",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -112
+      ],
+      "id": "5ea31fdf-40b8-42c4-a405-08a8cbeff306",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "query": "Real Pakistani company that faced business problems and used AI agents to solve them\n",
+        "options": {
+          "search_depth": "advanced",
+          "max_results": 1
+        }
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavily",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "8f79ee70-127d-47d9-be5a-23d3277308f2",
+      "name": "Search",
+      "credentials": {
+        "tavilyApi": {
+          "id": "rPK6uTggkTN12uKS",
+          "name": "Tavily account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your task is to research and summarize how Pakistani companies are using AI agents or AI-driven automation in their businesses.\n\nFor each company, include the following structured information:\n- Company Name\n- Problem Faced (what challenge or inefficiency they had)\n- AI Agent Solution (describe how AI was used or implemented)\n- Human Control (if any manual supervision was required)\n- Why It Worked (what made the solution effective)\n- Results (measurable impact or improvement)\n- Source Link (the original link to the article, case study, or website that proves this information)\n\nRules:\n- Focus only on Pakistani companies (like Lulusar, Bazaar, Tazah, Bykea, Dastgyr, Airlift (if applicable), etc.)\n- The information **must come from real, verifiable web sources** — include working URLs only.\n- Avoid speculative or made-up examples.\n- Use concise but factual language.\n- If no valid source is found for a company, skip it instead of fabricating data.\n\nSearch Results:\n{{$json[\"data\"]}}\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an AI research assistant that extracts structured information about how Pakistani companies use AI agents to solve real business problems.\n\nGuidelines:\n- Use only the information found in the search results provided below.\n- Write concise, factual sentences (grade 10 reading level).\n- If data is missing, leave that field empty; do not guess.\n- Make sure the output is valid JSON with double quotes.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        -112
+      ],
+      "id": "78b8b102-2273-45f4-ad50-382f021523ee",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 5000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        112
+      ],
+      "id": "a1c300ee-6a68-475a-9121-4c3cd80bc97b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "F5cgGH7W0PvV8RIX",
+          "name": "Google Gemini(PaLM) Api account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"company_name\": {\n    \"type\": \"string\",\n    \"description\": \"The company that implemented the AI agent\"\n  },\n  \"problem_faced\": {\n    \"type\": \"string\",\n    \"description\": \"The main business problem the company faced before AI agent\"\n  },\n  \"ai_agent_solution\": {\n    \"type\": \"string\",\n    \"description\": \"What the AI agent does to solve the problem\"\n  },\n  \"human_control\": {\n    \"type\": \"string\",\n    \"description\": \"How humans stay in control of the AI agent\"\n  },\n  \"results\": {\n    \"type\": \"string\",\n    \"description\": \"Measurable results the company achieved\"\n  },\n  \"why_it_worked\": {\n    \"type\": \"string\",\n    \"description\": \"Why the AI agent solution was effective\"\n  },\n  \"source_url\": {\n    \"type\": \"string\",\n    \"description\": \"The URL of the source where info was found\"\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        112
+      ],
+      "id": "bfb953f9-80e2-4e38-96ce-3bc0c7a0683d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# n8n Python Code Node\n\n# Get data from previous Tavily node\nresults = items[0]['json'].get(\"results\", [])\n\n# Format results into clean text for LLM context\nformatted_results = \"\"\nfor r in results:\n    title = r.get(\"title\", \"\")\n    url = r.get(\"url\", \"\")\n    content = r.get(\"content\", \"\")\n    formatted_results += f\"Title: {title}\\nURL: {url}\\nSummary: {content}\\n\\n\"\n\n# Return formatted data for the next LLM node\nreturn {\n    \"data\": formatted_results.strip()\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        -112
+      ],
+      "id": "0423d076-cc4f-4015-be99-d659d5f211bc",
+      "name": "Code in Python (Beta)"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Extract LLM output\nllm_output = items[0]['json'].get('output', [])\n\n# Build formatted plain text\ndocs_text = \"\"\nfor i, company in enumerate(llm_output, 1):\n    docs_text += f\"{i}. Company Name: {company.get('Company Name', 'N/A')}\\n\"\n    docs_text += f\"Problem Faced: {company.get('Problem Faced', 'N/A')}\\n\"\n    docs_text += f\"AI Agent Solution: {company.get('AI Agent Solution', 'N/A')}\\n\"\n    docs_text += f\"Human Control: {company.get('Human Control', 'N/A')}\\n\"\n    docs_text += f\"Results: {company.get('Results', 'N/A')}\\n\"\n    docs_text += f\"Why It Worked: {company.get('Why It Worked', 'N/A')}\\n\"\n    docs_text += f\"Source: {company.get('Source Link', 'N/A')}\\n\"\n    docs_text += \"\\n---\\n\\n\"\n\n# Return formatted text for Docs or Gmail Draft\nreturn [{'json': {'Draft_ready': docs_text.strip()}}]\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -112
+      ],
+      "id": "517997d7-65fe-4017-8d6c-7f43dfac723d",
+      "name": "Code in Python (Beta)1"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "Research of Pakistani Company to solving their problem with AI Agent",
+        "message": "={{ $json.Draft_ready }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        -112
+      ],
+      "id": "39fcea5d-4166-43d3-b553-1bf78550bdee",
+      "name": "Create a draft",
+      "webhookId": "2011edc1-4fe7-45af-bd40-daae4aff406b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QP97m4xEgvUQTTwe",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Search": [
+      {
+        "json": {
+          "query": "Real Pakistani company that faced business problems and used AI agents to solve them",
+          "follow_up_questions": null,
+          "answer": null,
+          "images": [],
+          "results": [
+            {
+              "url": "https://tezeract.ai/ai-development-companies/",
+              "title": "Top AI Companies In Pakistan Dominating 2025 Revealed! - Tezeract",
+              "content": "They make sure everything is transparently communicated, and even tell you if AI isn’t the right solution for your problem (yes, it’s not every time). Also, the fact that they have Globee, Clutch, and Manifest awards under their name speaks about their authenticity in becoming the top AI companies in Pakistan.\n\nIf you want to know what AI might be able to do for your unique business. We recommend you book their $500 strategy sessions with their consultants today!\n\n### Pixelette Technologies [...] The #1 thing about Tezeract, one of the top AI companies in Pakistan, is their approach toward helping unique businesses find and prioritize the right AI solutions based on their needs. Only then do they build, optimize, and test the AI software. They make sure their work has a calculable ROI and also train your staff on using the AI systems the right way, if needed. [...] When Lulusar, a major Pakistani fashion brand, needed to unlock the power of their marketing and sales data, they turned to Data Pilot. The result? An AI-powered analytics platform that delivered game-changing insights, optimized ad spend, and transformed their entire business performance.\n\nIsn’t that awesome?",
+              "score": 0.6512002,
+              "raw_content": null
+            }
+          ],
+          "response_time": 1.9,
+          "request_id": "9b4fe392-54af-4451-b0f6-2805f47852df"
+        }
+      }
+    ],
+    "Code in Python (Beta)": [
+      {
+        "json": {
+          "data": "Title: Top AI Companies In Pakistan Dominating 2025 Revealed! - Tezeract\nURL: https://tezeract.ai/ai-development-companies/\nSummary: They make sure everything is transparently communicated, and even tell you if AI isn’t the right solution for your problem (yes, it’s not every time). Also, the fact that they have Globee, Clutch, and Manifest awards under their name speaks about their authenticity in becoming the top AI companies in Pakistan.\n\nIf you want to know what AI might be able to do for your unique business. We recommend you book their $500 strategy sessions with their consultants today!\n\n### Pixelette Technologies [...] The #1 thing about Tezeract, one of the top AI companies in Pakistan, is their approach toward helping unique businesses find and prioritize the right AI solutions based on their needs. Only then do they build, optimize, and test the AI software. They make sure their work has a calculable ROI and also train your staff on using the AI systems the right way, if needed. [...] When Lulusar, a major Pakistani fashion brand, needed to unlock the power of their marketing and sales data, they turned to Data Pilot. The result? An AI-powered analytics platform that delivered game-changing insights, optimized ad spend, and transformed their entire business performance.\n\nIsn’t that awesome?"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a draft": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ee04a409-bc1f-4e76-9b42-c84ebc8e9415",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8858e97a0628deda9b0b22e0137227d56e8a990ada5f26e3b089f67e13e611d0"
+  },
+  "id": "h5YuiKO918HxcHI0",
+  "tags": []
+}
